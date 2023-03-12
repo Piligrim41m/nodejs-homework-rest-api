@@ -1,94 +1,54 @@
-const fs = require('fs').promises
-const path = require('path')
-const shortid = require('shortid')
-
-const contactsPath = path.join("models", "contacts.json")
-
-async function readData() {
-  try {
-    const contacts = await fs.readFile(contactsPath)
-  return JSON.parse(contacts)
-  } catch (err) {
-    console.log(err.message)
-  }
-};
-
-async function writeData(data) {
-  const stringifiedData = JSON.stringify(data) 
-  try {
-    await fs.writeFile(contactsPath, stringifiedData)
-  } catch (err) {
-    console.log(err.message)
-  }
-}
+const Contact = require('../db/contactModel');
+const { UenxistedContactError } = require('../helpers/errors');
 
 const listContacts = async () => {
-  try {
-    const contacts = await readData();
-    return contacts;
-  } catch (err) {
-    console.log(err.message)
-  }
+  const contacts = await Contact.find();
+    return contacts
 }
 
 const getContactById = async (contactId) => {
   try {
-    const allContacts = await readData()
-    const [contact] = allContacts.filter(contact => contact.id === contactId);
-    return contact;
-  } catch (err) {
-    console.log(err.message)
-  }
+    const contact = Contact.findOne({ _id: contactId });
+    return contact
+  } catch (error) {
+    throw new UenxistedContactError(`Failure! There is no contact found with id: ${contactId}`)
+  };
 }
 
-const addContact = async (body) => { 
-  const { name, email, phone } = body;
-  const newContact = {
-    id: shortid.generate(),
+const addContact = async ({name, email, phone, favorite = false}) => { 
+  const contact = new Contact({
     name,
     email,
     phone,
-  }
-  try {
-    const allContacts = await readData();
-    const upgradContacts = [...allContacts, newContact];
-    await writeData(upgradContacts)
-    return newContact
-  } catch (err) {
-    console.log(err.message)
-  }
+    favorite,
+  })
+  await contact.save();
+  return contact;
 }
 
 const removeContact = async (contactId) => {
   try {
-    const allContacts = await readData();
-    const updatedContacts = allContacts.filter(contact => contact.id !== contactId);
-    await writeData(updatedContacts)
-  } catch (err) {
-    console.log(err.message)
-  }
+    await Contact.findByIdAndRemove(contactId)
+  } catch (error) {
+    throw new UenxistedContactError(`Failure! There is no contact found with id: ${contactId}`)
+  };
 }
 
-const updateContact = async (contactId, body) => {
-  const { name, email, phone } = body;
-    try {
-    const allContacts = await readData();
-    const updatedContact = allContacts.map(contact => {
-      if (contactId === contact.id) {
-        contact = {
-          id: contactId,
-          name,
-          email,
-          phone,
-        };
-      }
-      return contact;
-    })
-      await writeData(updatedContact)
-  } catch (err) {
-    console.log(err.message)
-  }
-  }
+const updateContact = async (contactId, { name, email, phone, favorite = false }) => {
+  try {
+    await Contact.findByIdAndUpdate(contactId, { $set: { name, email, phone, favorite } });
+  } catch (error) {
+    throw new UenxistedContactError(`Failure! There is no contact found with id: ${contactId}`)
+  };
+}
+  
+const updateFavoriteStatus = async (contactId, { favorite }) => {
+  try {
+    await Contact.findByIdAndUpdate(contactId, { $set: { favorite } });
+  } catch (error) {
+    throw new UenxistedContactError(`Failure! There is no contact found with id: ${contactId}`)
+  };
+}
 
 module.exports = {
   listContacts,
@@ -96,4 +56,5 @@ module.exports = {
   removeContact,
   addContact,
   updateContact,
+  updateFavoriteStatus,
 }
