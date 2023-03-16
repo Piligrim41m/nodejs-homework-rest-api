@@ -1,50 +1,66 @@
 const Contact = require('../db/contactModel');
 const { UenxistedContactError } = require('../helpers/errors');
 
-const listContacts = async () => {
-  const contacts = await Contact.find();
-    return contacts
+const listContacts = async (user, page, limit = 20) => {
+
+  const contacts = await Contact
+    .find({ owner: user })
+    .select({ __v: 0 })
+    .skip(((page - 1) * limit))
+    .limit(limit);
+  return contacts;
 }
 
-const getContactById = async (contactId) => {
+const getContactById = async (contactId, user) => {
   try {
-    const contact = Contact.findOne({ _id: contactId });
+    const contact = await Contact.findOne({
+      _id: contactId,
+      owner: user,
+    }).select({ __v: 0 });
+    if (!contact) {
+      throw new UenxistedContactError(`Failure! There is no contact found with id: ${contactId}`)
+    }
     return contact
   } catch (error) {
     throw new UenxistedContactError(`Failure! There is no contact found with id: ${contactId}`)
   };
 }
 
-const addContact = async ({name, email, phone, favorite = false}) => { 
+const addContact = async ({name, email, phone, favorite = false}, user) => { 
   const contact = new Contact({
     name,
     email,
     phone,
     favorite,
+    owner: user,
   })
   await contact.save();
   return contact;
 }
 
-const removeContact = async (contactId) => {
+const removeContact = async (contactId, user) => {
   try {
-    await Contact.findByIdAndRemove(contactId)
+    await Contact.findByIdAndRemove({ _id: contactId, owner: user });
   } catch (error) {
     throw new UenxistedContactError(`Failure! There is no contact found with id: ${contactId}`)
   };
 }
 
-const updateContact = async (contactId, { name, email, phone, favorite = false }) => {
+const updateContact = async (contactId, { name, email, phone, favorite = false }, user) => {
   try {
-    await Contact.findByIdAndUpdate(contactId, { $set: { name, email, phone, favorite } });
+    await Contact.findByIdAndUpdate(
+      { _id: contactId, owner: user },
+      { $set: { name, email, phone, favorite } },);
   } catch (error) {
     throw new UenxistedContactError(`Failure! There is no contact found with id: ${contactId}`)
   };
 }
   
-const updateFavoriteStatus = async (contactId, { favorite }) => {
+const updateFavoriteStatus = async (contactId, { favorite }, user) => {
   try {
-    await Contact.findByIdAndUpdate(contactId, { $set: { favorite } });
+    await Contact.findByIdAndUpdate(
+      { _id: contactId, owner: user },
+      { $set: { favorite } },);
   } catch (error) {
     throw new UenxistedContactError(`Failure! There is no contact found with id: ${contactId}`)
   };
