@@ -8,19 +8,20 @@ const {
   ctrlRemoveContact,
   ctrlUpdateContact,
   ctrlUpdateFavoriteStatus} = require('../../controllers/contactsControler');
+const tokenCheckout = require('../../middleware/tokenCheckout');
 
 const router = express.Router()
 
-router.get('/', asyncWrapper(ctrlListContacts));
+router.get('/', tokenCheckout, asyncWrapper(ctrlListContacts));
 
-router.get('/:contactId', asyncWrapper(ctrlGetContactById));
+router.get('/:contactId', tokenCheckout, asyncWrapper(ctrlGetContactById));
 
-router.post('/', requestValidation, asyncWrapper(ctrlAddContact));
+router.post('/', requestValidation, tokenCheckout, asyncWrapper(ctrlAddContact));
 
-router.delete('/:contactId', asyncWrapper(ctrlRemoveContact));
+router.delete('/:contactId', tokenCheckout, asyncWrapper(ctrlRemoveContact));
 
-router.put('/:contactId', requestValidation, asyncWrapper(ctrlUpdateContact));
+router.put('/:contactId', tokenCheckout, requestValidation, asyncWrapper(ctrlUpdateContact));
 
-router.patch('/:contactId/favorite', asyncWrapper(ctrlUpdateFavoriteStatus));
+router.patch('/:contactId/favorite', tokenCheckout, asyncWrapper(ctrlUpdateFavoriteStatus));
 
 module.exports = router
