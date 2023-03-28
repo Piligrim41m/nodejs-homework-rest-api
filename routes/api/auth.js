@@ -6,7 +6,9 @@ const {
     ctrlRegister,
     ctrlLogin, 
     ctrlLogout,
-    ctrlCurrentUser} = require('../../controllers/userController');
+    ctrlCurrentUser,
+    ctrlAvatarChange} = require('../../controllers/userController');
+const upload = require('../../middleware/upload');
 
 const router = express.Router();
 
@@ -17,5 +19,7 @@ router.post('/login', authValidation, asyncWrapper(ctrlLogin));
 router.post('/logout', tokenCheckout, asyncWrapper(ctrlLogout));
 
 router.get('/current', tokenCheckout, asyncWrapper(ctrlCurrentUser));
+
+router.patch('/avatars', tokenCheckout, upload.single('avatar'), asyncWrapper(ctrlAvatarChange));
 
 module.exports = router

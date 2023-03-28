@@ -2,7 +2,8 @@ const {
     registerHandler,
     loginHandler, 
     logoutHandler,
-    currentUser} = require("../models/auth")
+    currentUser,
+    avatarChangeHandler} = require("../models/auth")
 
 const ctrlRegister = async (req, res) => {
     const user = await registerHandler(req.body);
@@ -24,9 +25,16 @@ const ctrlCurrentUser = async (req, res) => {
     res.json({ user: { email: user.email, subscription: user.subscription } });
 }
 
+const ctrlAvatarChange = async (req, res) => {
+    const { originalname } = req.file;
+    const avatarPath = await avatarChangeHandler(originalname, req.userId);
+    res.json({ avatarPath: avatarPath });
+}
+
 module.exports = {
     ctrlRegister,
     ctrlLogin,
     ctrlLogout,
     ctrlCurrentUser,
+    ctrlAvatarChange,
 }

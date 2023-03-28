@@ -16,12 +16,12 @@ router.get('/', tokenCheckout, asyncWrapper(ctrlListContacts));
 
 router.get('/:contactId', tokenCheckout, asyncWrapper(ctrlGetContactById));
 
-router.post('/', requestValidation, tokenCheckout, asyncWrapper(ctrlAddContact));
+router.post('/', tokenCheckout, requestValidation, asyncWrapper(ctrlAddContact));
 
 router.delete('/:contactId', tokenCheckout, asyncWrapper(ctrlRemoveContact));
 
 router.put('/:contactId', tokenCheckout, requestValidation, asyncWrapper(ctrlUpdateContact));
 
-router.patch('/:contactId/favorite', tokenCheckout, asyncWrapper(ctrlUpdateFavoriteStatus));
+router.patch('/:contactId', tokenCheckout, asyncWrapper(ctrlUpdateFavoriteStatus));
 
 module.exports = router
