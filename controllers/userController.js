@@ -3,7 +3,9 @@ const {
     loginHandler, 
     logoutHandler,
     currentUser,
-    avatarChangeHandler} = require("../models/auth")
+    avatarChangeHandler,
+    verificationMailCheker,
+    resendEmailHandler} = require("../models/auth")
 
 const ctrlRegister = async (req, res) => {
     const user = await registerHandler(req.body);
@@ -31,10 +33,22 @@ const ctrlAvatarChange = async (req, res) => {
     res.json({ avatarPath: avatarPath });
 }
 
+const ctrlVerificationMailChecker = async (req, res) => {
+    verificationMailCheker(req.params.verificationToken);
+    res.json({ message: 'Verification successfull' });
+}
+
+const ctrlResendEmail = async (req, res) => {
+    resendEmailHandler(req.body);
+    res.json({ message: 'Verification email sent' });
+}
+
 module.exports = {
     ctrlRegister,
     ctrlLogin,
     ctrlLogout,
     ctrlCurrentUser,
     ctrlAvatarChange,
+    ctrlVerificationMailChecker,
+    ctrlResendEmail,
 }

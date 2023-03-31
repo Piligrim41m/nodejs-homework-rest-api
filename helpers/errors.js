@@ -12,10 +12,24 @@ class ValidationError extends PhoneBookError {
     }
 } 
 
+class AuthorizedStateError extends PhoneBookError {
+    constructor(message) {
+        super(message)
+        this.status = 400
+    }
+}
+
 class UenxistedContactError extends PhoneBookError {
     constructor(message) {
         super(message)
         this.status = 404
+    }
+}
+
+class UnexistedTokenError extends PhoneBookError {
+    constructor(message) {
+        super(message)
+        this. status = 404
     }
 }
 
@@ -39,4 +53,6 @@ module.exports = {
     UenxistedContactError,
     UnauthorizedError,
     ConflictError,
+    AuthorizedStateError,
+    UnexistedTokenError,
 }

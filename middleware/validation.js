@@ -29,7 +29,19 @@ const authValidation = (req, res, next) => {
     next()
 }
 
+const emailResendValidation = (req, res, next) => {
+    const schema = Joi.object({
+        email: Joi.string().min(6).max(30).required(),
+    });
+    const resultValidation = schema.validate(req.body);
+    if (resultValidation.error) {
+        next(new ValidationError(resultValidation.error));
+    }
+    next()
+}
+
 module.exports = {
     requestValidation,
     authValidation,
+    emailResendValidation,
 }

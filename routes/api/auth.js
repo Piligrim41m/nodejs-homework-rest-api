@@ -1,13 +1,15 @@
 const express = require('express');
 const { asyncWrapper } = require('../../helpers/apiHelpers');
 const tokenCheckout = require('../../middleware/tokenCheckout');
-const { authValidation } = require('../../middleware/validation');
+const { authValidation, emailResendValidation } = require('../../middleware/validation');
 const {
     ctrlRegister,
     ctrlLogin, 
     ctrlLogout,
     ctrlCurrentUser,
-    ctrlAvatarChange} = require('../../controllers/userController');
+    ctrlAvatarChange,
+    ctrlResendEmail,
+    ctrlVerificationMailChecker} = require('../../controllers/userController');
 const upload = require('../../middleware/upload');
 
 const router = express.Router();
@@ -18,7 +20,11 @@ router.post('/login', authValidation, asyncWrapper(ctrlLogin));
 
 router.post('/logout', tokenCheckout, asyncWrapper(ctrlLogout));
 
+router.post('/users/verify', emailResendValidation, asyncWrapper(ctrlResendEmail));
+
 router.get('/current', tokenCheckout, asyncWrapper(ctrlCurrentUser));
+
+router.get('/verify/:verificationToken', asyncWrapper(ctrlVerificationMailChecker));
 
 router.patch('/avatars', tokenCheckout, upload.single('avatar'), asyncWrapper(ctrlAvatarChange));
 

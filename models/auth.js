@@ -1,12 +1,14 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../db/userModel');
-const { ConflictError, UnauthorizedError } = require('../helpers/errors');
+const { ConflictError, UnauthorizedError, UnexistedTokenError, AuthorizedStateError } = require('../helpers/errors');
 const { userChekoutByEmail, userCheckoutById } = require('../helpers/userCheckout');
 const gravatar = require('gravatar');
 const path = require('path')
 const Jimp = require('jimp');
 const fs = require('fs').promises;
+const { v4: uuidv4 } = require('uuid');
+const { transporter } = require('../helpers/emailSender');
 
 const registerHandler = async ({ email, password, subscription = 'starter', }) => {
     const avatarUrl = await gravatar.url(email)
@@ -14,6 +16,7 @@ const registerHandler = async ({ email, password, subscription = 'starter', }) =
         email,
         password,
         subscription,
+        verificationToken: uuidv4(),
         avatarUrl,
     });
     try {
@@ -23,11 +26,26 @@ const registerHandler = async ({ email, password, subscription = 'starter', }) =
             throw new ConflictError(`Email ${email} is already in use`);
         }
     }
+    const emailOptions = {
+        from: 'litoleksii@meta.ua',
+        to: `${email}`,
+        subject: 'Email confirmation',
+        text: `http://localhost:3000/api/users/verify/:${user.verificationToken}`,
+        html: `<a href="http://localhost:3000/api/users/verify/:${user.verificationToken}">Confirmation link</a>`,
+    }
+
+    transporter
+        .sendMail(emailOptions)
+        .then((info) => console.log(info))
+        .catch((err) => console.log(err))
     return user;
 }
 
 const loginHandler = async ({ email, password }) => {
     const user = await userChekoutByEmail(email);
+    if (user.verefy === false) {
+        throw new UnauthorizedError("Your email isn't verified");
+    }
     const comparation = await bcrypt.compare(password, user.password);
     if (!comparation) {
         throw new UnauthorizedError('Wrong password');
@@ -66,10 +84,43 @@ const avatarChangeHandler = async (originalname, userId) => {
     return `/api/avatars/${avatarName}`
 }
 
+const verificationMailCheker = async (verificationToken) => {
+    const user = await User.findOne({ verificationToken });
+    if (!user) {
+        throw new UnexistedTokenError('User not found')
+    }
+    await User.findByIdAndUpdate(user._id, {
+        $set: { verify: true, },
+    });
+}
+
+const resendEmailHandler = async (email) => {
+    const user = await userChekoutByEmail(email);
+    if (user.verify === true) {
+        throw new AuthorizedStateError('Verification has already been passed');
+    }
+    const emailOptions = {
+    from: 'litoleksii@meta.ua',
+    to: `${email}`,
+    subject: 'Email confirmation',
+    text: `http://localhost:3000/api/users/verify/:${user.verificationToken}`,
+    html: `<a href="http://localhost:3000/api/users/verify/:${user.verificationToken}">Confirmation link</a>`,
+    };
+    
+    transporter
+        .sendMail(emailOptions)
+        .then((info) => console.log(info))
+        .catch((err) => console.log(err));
+    
+    return user;
+}
+
 module.exports = {
     registerHandler,
     loginHandler,
     logoutHandler,
     currentUser,
     avatarChangeHandler,
+    verificationMailCheker,
+    resendEmailHandler,
 }
